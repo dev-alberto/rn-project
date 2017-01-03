@@ -155,4 +155,3 @@ class QNetwork:
         q_vals = self.q_vals(state)
         return q_vals
 
-
