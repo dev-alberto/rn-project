@@ -1,26 +1,24 @@
+import argparse
+
+parser = argparse.ArgumentParser()
+
 #environment args
-env_args = []
+env_args = parser.add_argument_group('Environment')
 
-screen_width = 84
-screen_height = 84
-display_screen = True
-
-env_args.append(screen_height)
-env_args.append(screen_width)
-env_args.append(display_screen)
+env_args.add_argument("--screen_width", type=int, default=84, help="Screen width after resize.")
+env_args.add_argument("--screen_height", type=int, default=84, help="Screen height after resize.")
 
 #memory args
-mem_args = []
+mem_args = parser.add_argument_group('Memory')
 
 replay_size = 100000
 #how many frames form a state
 num_frames = 4
 
-mem_args.append(replay_size)
-mem_args.append(num_frames)
+
 
 #q network args
-q_args = []
+q_args = parser.add_argument_group('QNetwork')
 
 learning_rate = 0.0025
 batch_size = 32
@@ -29,15 +27,9 @@ min_reward = -1
 max_reward = 1
 optimizer = 'rmsprop'
 
-q_args.append(learning_rate)
-q_args.append(batch_size)
-q_args.append(decay_rate)
-q_args.append(min_reward)
-q_args.append(max_reward)
-q_args.append(optimizer)
 
 #agent args
-agent_args = []
+agent_args = parser.add_argument_group('Agent')
 
 exploration_rate_start = 1
 exploration_rate_end = 0.1
