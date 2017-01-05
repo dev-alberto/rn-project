@@ -2,6 +2,8 @@ import lasagne
 import numpy as np
 import theano
 import theano.tensor as T
+from lasagne.layers import dnn
+
 
 INPUT_SCALE = 255.0
 
@@ -104,24 +106,68 @@ class QNetwork:
     def build_network(self, num_actions):
         l_in = lasagne.layers.InputLayer(shape=(None, self.history_length, self.screen_height, self.screen_width))
 
-        l_conv1 = lasagne.layers.Conv2DLayer(l_in, num_filters=32, filter_size=(8, 8), stride=(4, 4),
-                                             nonlinearity=lasagne.nonlinearities.rectify, W=lasagne.init.HeUniform(),
-                                             b=lasagne.init.Constant(.1))
+        # l_conv1 = lasagne.layers.Conv2DLayer(l_in, num_filters=32, filter_size=(8, 8), stride=(4, 4),
+        #                                      nonlinearity=lasagne.nonlinearities.rectify, W=lasagne.init.HeUniform(),
+        #                                      b=lasagne.init.Constant(.1))
+        #
+        # l_conv2 = lasagne.layers.Conv2DLayer(l_conv1, num_filters=64, filter_size=(4, 4), stride=(2, 2),
+        #                                      nonlinearity=lasagne.nonlinearities.rectify, W=lasagne.init.HeUniform(),
+        #                                      b=lasagne.init.Constant(.1))
+        #
+        # l_conv3 = lasagne.layers.Conv2DLayer(l_conv2, num_filters=64, filter_size=(3, 3), stride=(1, 1),
+        #                                      nonlinearity=lasagne.nonlinearities.rectify, W=lasagne.init.HeUniform(),
+        #                                      b=lasagne.init.Constant(.1))
+        #
+        # l_hidden1 = lasagne.layers.DenseLayer(l_conv3, num_units=512, nonlinearity=lasagne.nonlinearities.rectify,
+        #                                       W=lasagne.init.HeUniform(), b=lasagne.init.Constant(.1))
+        #
+        # l_out = lasagne.layers.DenseLayer(l_hidden1, num_units=num_actions, nonlinearity=None,
+        #                                   W=lasagne.init.HeUniform(), b=lasagne.init.Constant(.1))
+        l_conv1 = dnn.Conv2DDNNLayer(
+              l_in,
+              num_filters=32,
+              filter_size=(8, 8),
+              stride=(4, 4),
+              nonlinearity=lasagne.nonlinearities.rectify,
+              W=lasagne.init.HeUniform(),
+              b=lasagne.init.Constant(.1)
+          )
 
-        l_conv2 = lasagne.layers.Conv2DLayer(l_conv1, num_filters=64, filter_size=(4, 4), stride=(2, 2),
-                                             nonlinearity=lasagne.nonlinearities.rectify, W=lasagne.init.HeUniform(),
-                                             b=lasagne.init.Constant(.1))
+        l_conv2 = dnn.Conv2DDNNLayer(
+              l_conv1,
+              num_filters=64,
+              filter_size=(4, 4),
+              stride=(2, 2),
+              nonlinearity=lasagne.nonlinearities.rectify,
+              W=lasagne.init.HeUniform(),
+              b=lasagne.init.Constant(.1)
+           )
 
-        l_conv3 = lasagne.layers.Conv2DLayer(l_conv2, num_filters=64, filter_size=(3, 3), stride=(1, 1),
-                                             nonlinearity=lasagne.nonlinearities.rectify, W=lasagne.init.HeUniform(),
-                                             b=lasagne.init.Constant(.1))
+        l_conv3 = dnn.Conv2DDNNLayer(
+              l_conv2,
+              num_filters=64,
+              filter_size=(3, 3),
+              stride=(1, 1),
+              nonlinearity=lasagne.nonlinearities.rectify,
+              W=lasagne.init.HeUniform(),
+              b=lasagne.init.Constant(.1)
+          )
 
-        l_hidden1 = lasagne.layers.DenseLayer(l_conv3, num_units=512, nonlinearity=lasagne.nonlinearities.rectify,
-                                              W=lasagne.init.HeUniform(), b=lasagne.init.Constant(.1))
+        l_hidden1 = lasagne.layers.DenseLayer(
+              l_conv3,
+              num_units=512,
+              nonlinearity=lasagne.nonlinearities.rectify,
+              W=lasagne.init.HeUniform(),
+              b=lasagne.init.Constant(.1)
+          )
 
-        l_out = lasagne.layers.DenseLayer(l_hidden1, num_units=num_actions, nonlinearity=None,
-                                          W=lasagne.init.HeUniform(), b=lasagne.init.Constant(.1))
-
+        l_out = lasagne.layers.DenseLayer(
+              l_hidden1,
+              num_units=num_actions,
+              nonlinearity=None,
+              W=lasagne.init.HeUniform(),
+              b=lasagne.init.Constant(.1)
+          )
         return l_out
 
     def train(self, states, actions, rewards, next_states, terminals):
