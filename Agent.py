@@ -31,6 +31,12 @@ class Agent:
         self.total_score = 0.0
         self.total_moves = 0
 
+    def get_net(self):
+        return self.net
+
+    def set_net(self, _net):
+        self.net = _net
+
     def restart_random(self):
         self.env.restart()
         # perform random number of dummy actions to produce more stochastic games
@@ -53,7 +59,7 @@ class Agent:
 
     def step(self, exploration_rate, play=False):
         # perform a single step (a single action)
-        self.env.render()
+        #self.env.render()
         self.total_moves += 1
         if random.random() < exploration_rate:
             # randomly select a action based on exploration_rate
@@ -131,6 +137,7 @@ class Agent:
 
     def play(self, num_games):
         self.restart_random()
+       # self.env.render()
         for i in xrange(num_games):
             # play until terminal state
             while not self.step(self.exploration_rate_test, play=True):
