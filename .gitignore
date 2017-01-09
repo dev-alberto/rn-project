@@ -2,4 +2,7 @@
 # Ignore compiled modules
 *.pyc
 
+# Ignore data files
+**/safe_*
+**/export*
 
