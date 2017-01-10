@@ -6,3 +6,6 @@
 **/safe_*
 **/export*
 
+# Ignore this folder
+safe/*
+visualize/assets/*
