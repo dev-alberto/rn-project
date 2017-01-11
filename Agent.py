@@ -2,16 +2,16 @@ from __future__ import print_function
 import random
 import datetime
 from memory import add, get_current_state, get_minibatch
+from QNetwork import train, choose_action
 
 
 class Agent:
-    def __init__(self, environment, q_network,
-                 start_epoch=0, train_steps=250000, random_starts=30, history_length=4,
+    def __init__(self, environment,
+                 start_epoch=0, train_steps=2500, random_starts=30, history_length=4,
                  exploration_rate_start=1, exploration_rate_end=0.1, exploration_decay_steps=1000000,
                  train_frequency=4, train_repeat=1):
 
         self.env = environment
-        self.net = q_network
 
         self.num_actions = self.env.num_actions()
 
@@ -30,12 +30,6 @@ class Agent:
         self.total_score = 0.0
         self.total_moves = 0
 
-    def get_net(self):
-        return self.net
-
-    def set_net(self, _net):
-        self.net = _net
-
     def restart_random(self):
         self.env.restart()
         # perform random number of dummy actions to produce more stochastic games
@@ -45,7 +39,6 @@ class Agent:
             terminal = self.env.is_terminal()
             assert not terminal, "terminal state occurred during random initialization"
             # add dummy states to buffer to guarantee history_length screens
-            #self.buf.add(screen)
             add(0, reward, screen, terminal)
 
     def _exploration_rate(self):
@@ -68,12 +61,12 @@ class Agent:
             # choose action with highest Q-value
             state = get_current_state()
             # for convenience getCurrentState() returns minibatch
-            action = self.net.choose_action(state)
+            action = choose_action(state)
             # print "Prediction chosen",action
-            # moves_print = " Exploration rate:	" + str(exploration_rate) + " action is: " + str(action)
-            # moves_chosen = open("moves.txt", "a")
-            # moves_chosen.write(moves_print+"\n")
-            #  moves_chosen.close()
+           # moves_print = " Exploration rate:	" + str(exploration_rate) + " action is: " + str(action)
+           # moves_chosen = open("moves.txt", "a")
+           # moves_chosen.write(moves_print+"\n")
+          #  moves_chosen.close()
 
         reward = self.env.act(action)
         screen = self.env.get_screen()
@@ -115,7 +108,7 @@ class Agent:
                 for j in range(self.train_repeat):
                     # sample minibatch
                     minibatch = get_minibatch()
-                    self.net.train(minibatch[0], minibatch[1], minibatch[2], minibatch[3], minibatch[4])
+                    train(minibatch[0], minibatch[1], minibatch[2], minibatch[3], minibatch[4])
             self.total_train_steps += 1
 
     def play(self, num_games):
