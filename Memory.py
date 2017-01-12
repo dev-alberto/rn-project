@@ -7,8 +7,6 @@ history_length = 4
 screen_height = 84
 screen_width = 84
 batch_size = 32
-
-# preallocate memory
 actions = np.empty(size, dtype=np.uint8)
 rewards = np.empty(size, dtype=np.int64)
 terminals = np.empty(size, dtype=np.bool)
@@ -58,17 +56,17 @@ def get_current_state():
     # this is the input to the model to predict what move to make next
     # reuse first row of prestates in minibatch to minimize memory consumption
     pre_states[0, Ellipsis] = get_state(current - 1)
-    # print self.getState(self.current - 1).shape, "is shape of getstate"
     # print self.prestates.shape,"is the shape of current state"
     current_state = get_state(current - 1)
     return current_state
 
 
 def get_minibatch():
-    # sample random indexes
+    """Returns a minibatch, randomly"""
     indexes = []
     while len(indexes) < batch_size:
         while True:
+            #imporant: select random indices...
             index = random.randint(history_length, count - 1)
             if index >= current > index - history_length:
                 continue

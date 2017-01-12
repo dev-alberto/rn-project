@@ -1,37 +1,30 @@
 from __future__ import print_function
 from Agent import Agent
 from Evironment import GymEnvironment
-from QNetwork import net
+from QNetwork import save_net, net
 import numpy as np
 import datetime
-import cPickle
 import sys
 
 sys.setrecursionlimit(2000000000)
-RANDOM_STEPS = 300 #Populate replay memory with random steps before starting learning
-EPOCHS = 2
+RANDOM_STEPS = 50000 #Populate replay memory with random steps before starting learning
+EPOCHS = 6
 
 
 def extract_epoch(net_file):
         return int(filter(str.isdigit, net_file))
 
 
-def load_net(_file):
-        return cPickle.load(open(_file, 'r'))
-
-
 def train_iteration(_agent, iteration):
         a = datetime.datetime.now().replace(microsecond=0)
         _agent.train()
-        path = 'saved_network' + '/net' + '-epoch' + str(iteration) + '.pkl'
-        cPickle.dump(net, open(path, 'wb'), cPickle.HIGHEST_PROTOCOL)
+        save_net(iteration)
         b = datetime.datetime.now().replace(microsecond=0)
         print("Completed " + str(iteration + 1) + "/" + str(EPOCHS) + " epochs in ", (b - a))
 
 
-def resume_train(_agent, _file):
-        epoch = extract_epoch(_file)
-        _agent.set_net(load_net(_file))
+def resume_train(_agent, my_net):
+        epoch = extract_epoch(my_net)
         _agent.play_random(RANDOM_STEPS)
         for i in range(epoch+1, EPOCHS):
                 train_iteration(_agent, i)
@@ -46,14 +39,15 @@ def train(_agent):
 
 #rng = np.random.RandomState()
 env = GymEnvironment()
-#q_net = QNetwork(env.num_actions(), np.random.RandomState(123456))
-#q_net = load_net('saved_network/rmspropNet-epoch24.pkl')
 
-start_agent = Agent(env)
-#resume_agent = Agent(env, q_net, start_epoch=26)
+train_agent = Agent(env)
 
-train(start_agent)
+resume_agent = Agent(env, start_epoch=5)
 
-#resume_train(resume_agent, 'saved_network/net-epoch25.pkl')
+play_agent = Agent(env, p=True)
 
-#agent.play(1)
+#train(train_agent)
+
+resume_train(resume_agent, 'saved_network/net-epoch4.pkl')
+
+#play_agent.play(10)

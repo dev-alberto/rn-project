@@ -1,13 +1,13 @@
 from __future__ import print_function
 import random
 import datetime
-from memory import add, get_current_state, get_minibatch
+from Memory import add, get_current_state, get_minibatch
 from QNetwork import train, choose_action
 
 
 class Agent:
     def __init__(self, environment,
-                 start_epoch=0, train_steps=2500, random_starts=30, history_length=4,
+                 start_epoch=0, p=False, train_steps=250000, random_starts=30, history_length=4,
                  exploration_rate_start=1, exploration_rate_end=0.1, exploration_decay_steps=1000000,
                  train_frequency=4, train_repeat=1):
 
@@ -20,15 +20,25 @@ class Agent:
 
         self.exploration_rate_start = exploration_rate_start
         self.exploration_rate_end = exploration_rate_end
+
+        #How many steps to decay the exploration rate.
         self.exploration_decay_steps = exploration_decay_steps
+
         self.train_frequency = train_frequency
+
+        #Number of times to sample minibatch during training
         self.train_repeat = train_repeat
 
+        #Perform this many steps per epoch
         self.train_steps = train_steps
+
+        #model total train time
         self.total_train_steps = start_epoch * train_steps
 
         self.total_score = 0.0
         self.total_moves = 0
+
+        self.p = p
 
     def restart_random(self):
         self.env.restart()
@@ -50,9 +60,11 @@ class Agent:
         else:
             return self.exploration_rate_end
 
-    def step(self, exploration_rate, play=False):
+    def step(self, exploration_rate):
         # perform a single step (a single action)
-        #self.env.render()
+        if self.p:
+            """Display game screen if mode is set to play"""
+            self.env.render()
         self.total_moves += 1
         if random.random() < exploration_rate:
             # randomly select a action based on exploration_rate
@@ -113,8 +125,7 @@ class Agent:
 
     def play(self, num_games):
         self.restart_random()
-       # self.env.render()
         for i in range(num_games):
-            # play until terminal state
-            while not self.step(0.05, play=True):
+            # play until terminal state, with 0.05 exploration rate, so no random allowed :))
+            while not self.step(0.05):
                 pass
