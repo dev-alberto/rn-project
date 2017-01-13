@@ -116,8 +116,8 @@ def build_net():
 
     output_layer = lasagne.layers.DenseLayer(hidden_layer1, num_units=number_env_actions, nonlinearity=None,
                                              W=lasagne.init.Normal(.01), b=lasagne.init.Constant(.1))
-    return output_layer
 
+    return output_layer
 
 #net = build_net()
 
@@ -127,7 +127,7 @@ def load_model(_file):
     print("Model Loaded")
     return cPickle.load(open(_file, 'r'))
 
-net = load_model('saved_network/net-epoch17.pkl')
+net = load_model('saved_network/net-epoch29.pkl')
 
 
 def get_layer_output(_net, _states):
