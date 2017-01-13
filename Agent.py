@@ -1,7 +1,7 @@
 from __future__ import print_function
 import random
 import datetime
-from Memory import add, get_current_state, get_minibatch
+from Memory import add, get_minibatch, get_current_state
 from QNetwork import train, choose_action
 
 
@@ -13,7 +13,9 @@ class Agent:
 
         self.env = environment
 
+
         self.num_actions = self.env.num_actions()
+
 
         self.random_starts = random_starts
         self.history_length = history_length
@@ -75,11 +77,10 @@ class Agent:
             # for convenience getCurrentState() returns minibatch
             action = choose_action(state)
             # print "Prediction chosen",action
-           # moves_print = " Exploration rate:	" + str(exploration_rate) + " action is: " + str(action)
-           # moves_chosen = open("moves.txt", "a")
+          #  moves_print = " Exploration rate:	" + str(exploration_rate) + " action is: " + str(action)
+            #moves_chosen = open("moves.txt", "a")
            # moves_chosen.write(moves_print+"\n")
-          #  moves_chosen.close()
-
+           # moves_chosen.close()
         reward = self.env.act(action)
         screen = self.env.get_screen()
         terminal = self.env.is_terminal()

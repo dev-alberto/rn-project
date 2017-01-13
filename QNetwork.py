@@ -36,7 +36,7 @@ rng = np.random.RandomState(123456)
 # Environment parameters
 screen_height = 84
 screen_width = 84
-number_env_actions = 18  # atari setup
+number_env_actions = 6  # atari setup
 input_scale = 255
 
 
@@ -58,6 +58,21 @@ actions_shared = theano.shared(np.zeros((mini_batch_size, 1), dtype='int32'),
 
 terminals_shared = theano.shared(np.zeros((mini_batch_size, 1), dtype='int32'),
                                  broadcastable=(False, True))
+# 4-dimensional ndarray (similar to prestates in memory_store)
+states = T.tensor4('states')
+# 4-dimensional ndarray (similar to poststates in memory_store)
+post_states = T.tensor4('post_states')
+rewards = T.col('rewards')
+actions = T.icol('actions')
+terminals = T.icol('terminals')
+
+givens = {
+        states: states_shared,
+        post_states: post_states_shared,
+        rewards: rewards_shared,
+        actions: actions_shared,
+        terminals: terminals_shared
+    }
 
 
 def build_net():
@@ -87,24 +102,20 @@ def build_net():
 
     # Second network, utilisez NVIDIA GPU for training
 
-    convolution_layer1 = dnn.Conv2DDNNLayer(input_layer, num_filters=32, filter_size=(8, 8), stride=(4, 4),
+    convolution_layer1 = dnn.Conv2DDNNLayer(input_layer, num_filters=16, filter_size=(8, 8), stride=(4, 4),
                                             nonlinearity=lasagne.nonlinearities.rectify,
-                                            W=lasagne.init.HeUniform(), b=lasagne.init.Constant(.1))
+                                            W=lasagne.init.Normal(.01), b=lasagne.init.Constant(.1))
 
-    convolution_layer2 = dnn.Conv2DDNNLayer(convolution_layer1, num_filters=64, filter_size=(4, 4), stride=(2, 2),
-                                            nonlinearity=lasagne.nonlinearities.rectify, W=lasagne.init.HeUniform(),
+    convolution_layer2 = dnn.Conv2DDNNLayer(convolution_layer1, num_filters=32, filter_size=(4, 4), stride=(2, 2),
+                                            nonlinearity=lasagne.nonlinearities.rectify, W=lasagne.init.Normal(.01),
                                             b=lasagne.init.Constant(.1))
 
-    convolution_layer3 = dnn.Conv2DDNNLayer(convolution_layer2, num_filters=64, filter_size=(3, 3), stride=(1, 1),
-                                            nonlinearity=lasagne.nonlinearities.rectify,
-                                            W=lasagne.init.HeUniform(), b=lasagne.init.Constant(.1))
-
-    hidden_layer1 = lasagne.layers.DenseLayer(convolution_layer3, num_units=512,
+    hidden_layer1 = lasagne.layers.DenseLayer(convolution_layer2, num_units=256,
                                               nonlinearity=lasagne.nonlinearities.rectify,
-                                              W=lasagne.init.HeUniform(), b=lasagne.init.Constant(.1))
+                                              W=lasagne.init.Normal(.01), b=lasagne.init.Constant(.1))
 
     output_layer = lasagne.layers.DenseLayer(hidden_layer1, num_units=number_env_actions, nonlinearity=None,
-                                             W=lasagne.init.HeUniform(), b=lasagne.init.Constant(.1))
+                                             W=lasagne.init.Normal(.01), b=lasagne.init.Constant(.1))
     return output_layer
 
 
@@ -113,9 +124,10 @@ def build_net():
 
 def load_model(_file):
     """Comment the above line and set net variable to: net = load_model('my_model')"""
+    print("Model Loaded")
     return cPickle.load(open(_file, 'r'))
 
-net = load_model('saved_network/net-epoch4.pkl')
+net = load_model('saved_network/net-epoch17.pkl')
 
 
 def get_layer_output(_net, _states):
@@ -151,48 +163,30 @@ def mini_batch_optimisation(_loss, _net_params):
     return lasagne.updates.rmsprop(_loss, _net_params, learning_rate, rms_decay, rms_epsilon)
 
 
-def compute_theano_funct_parameters():
-    # 4-dimensional ndarray (similar to prestates in memory_store)
-    states = T.tensor4('states')
-    # 4-dimensional ndarray (similar to poststates in memory_store)
-    post_states = T.tensor4('post_states')
-    rewards = T.col('rewards')
-    actions = T.icol('actions')
-    terminals = T.icol('terminals')
+#def compute_theano_funct_parameters():
+__q_values = get_layer_output(net, states)
+next_q_values = get_layer_output(net, post_states)
+next_q_values = theano.gradient.disconnected_grad(next_q_values)
 
-    q_values = get_layer_output(net, states)
-    next_q_values = get_layer_output(net, post_states)
-    next_q_values = theano.gradient.disconnected_grad(next_q_values)
+__loss = get_loss(rewards, terminals, __q_values, next_q_values, actions)
 
-    _loss = get_loss(rewards, terminals, q_values, next_q_values, actions)
+_net_parameters = get_network_parameters(net)
 
-    _net_parameters = get_network_parameters(net)
+"""updates : describe how to update the shared value"""
+_updates = mini_batch_optimisation(__loss, _net_parameters)
 
-    """The givens parameter allows to separate the description of the model
-    and the exact definition of the inputs variable. We use givens to speed up the GPU,
-    i.e we will transfer a mini-batch to the GPU at each function call."""
-    _givens = {
-        states: states_shared,
-        post_states: post_states_shared,
-        rewards: rewards_shared,
-        actions: actions_shared,
-        terminals: terminals_shared
-    }
-    """updates : describe how to update the shared value"""
-    _updates = mini_batch_optimisation(_loss, _net_parameters)
-
-    return _givens, _updates, _loss, q_values, states
-    # print("debug")
+    #print("debug")
+#return _updates, _loss, __q_values
     # return theano.function([], [_loss, q_values], updates=_updates, givens=_givens)
 
 
 # print(make_theano_loss_function()[1])
 
-params = compute_theano_funct_parameters()
-
+#params = compute_theano_funct_parameters()
+#print(params)
 '''Symbolic theano functions for our loss and q-values'''
-f1 = theano.function([], [params[2], params[3]], updates=params[1], givens=params[0])
-f2 = theano.function([], params[3], givens={params[4]: states_shared})
+f1 = theano.function([], [__loss, __q_values], updates=_updates, givens=givens)
+f2 = theano.function([], __q_values, givens={states: states_shared})
 
 
 def train(_states, _actions, _rewards, _next_states, _terminals):
@@ -201,8 +195,9 @@ def train(_states, _actions, _rewards, _next_states, _terminals):
     actions_shared.set_value(np.matrix(_actions).T)
     rewards_shared.set_value(np.matrix(_rewards, dtype=theano.config.floatX).T)
     terminals_shared.set_value(np.matrix(_terminals).T)
+    #caca = compute_theano_funct_parameters()
     _loss, _ = f1()
-    # print loss,_
+    #print(_loss)
     # print("finished train step.sqrt of loss: ", np.sqrt(_loss))
     return np.sqrt(_loss)
 
@@ -213,8 +208,9 @@ def q_vals(_state):
     """ Ellipsis is used here to indicate a placeholder for the rest of the array, cool slicing """
     _states[0, Ellipsis] = _state
     states_shared.set_value(_states)
+    #caca = compute_theano_funct_parameters()
     # q_values = get_layer_output(net, _states)
-    return f1()[0]
+    return f2()[0]
 
 
 def choose_action(_state):
