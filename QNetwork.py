@@ -127,7 +127,7 @@ def load_model(_file):
     print("Model Loaded")
     return cPickle.load(open(_file, 'r'))
 
-net = load_model('saved_network/net-epoch29.pkl')
+net = load_model('saved_network/net-epoch35.pkl')
 
 
 def get_layer_output(_net, _states):

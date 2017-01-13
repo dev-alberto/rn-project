@@ -44,12 +44,12 @@ env = GymEnvironment()
 
 train_agent = Agent(env)
 
-resume_agent = Agent(env, start_epoch=30)
+resume_agent = Agent(env, start_epoch=36)
 
 play_agent = Agent(env, p=True)
 
 #train(train_agent)
 
-resume_train(resume_agent, 'saved_network/net-epoch29.pkl')
+resume_train(resume_agent, 'saved_network/net-epoch35.pkl')
 
 #play_agent.play(10)
