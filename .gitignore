@@ -1,3 +1,5 @@
+# ideea folder
+.idea/*
 
 # Ignore compiled modules
 *.pyc
