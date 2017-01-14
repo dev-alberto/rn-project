@@ -9,7 +9,7 @@ import sys
 
 sys.setrecursionlimit(2000000000)
 RANDOM_STEPS = 50000 #Populate replay memory with random steps before starting learning
-EPOCHS = 50
+EPOCHS = 80
 
 
 def extract_epoch(net_file):
@@ -44,12 +44,12 @@ env = GymEnvironment()
 
 train_agent = Agent(env)
 
-resume_agent = Agent(env, start_epoch=36)
+resume_agent = Agent(env, start_epoch=39)
 
 play_agent = Agent(env, p=True)
 
 #train(train_agent)
 
-resume_train(resume_agent, 'saved_network/net-epoch35.pkl')
+resume_train(resume_agent, 'saved_network/net-epoch38.pkl')
 
 #play_agent.play(10)
